@@ -22,9 +22,11 @@ jobs:
       - uses: actions/setup-go@v2
         with:
           go-version: '^1.13.1' # The Go version to download (if necessary) and use.
-
+      - name: go mod init
+        run: go mod init
+        working-directory: webserver/
       - name: Test code
-        run: GOOS=linux GOARCH=386 go vet
+        run: go vet
         working-directory: webserver/
   buildApp:
     name: Build App

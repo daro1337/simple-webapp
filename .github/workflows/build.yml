@@ -10,7 +10,7 @@ env:
   app_name: hello
 jobs:
   testSourceCode:
-    name: Build App
+    name: Test Source Code
 
     runs-on: ubuntu-latest
     timeout-minutes: 10

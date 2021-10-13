@@ -7,7 +7,8 @@ on:
     tags:
       - 'v*.*.*'
 env:
-  app_name: hello
+  app_repo: daro113377
+  app_name: hello-go
 jobs:
   testSourceCode:
     name: Test Source Code
@@ -29,6 +30,7 @@ jobs:
       - name: Test code
         run: go vet
         working-directory: webserver/
+
   buildApp:
     name: Build App
 
@@ -75,6 +77,12 @@ jobs:
         run: GOOS=linux GOARCH=386 go build ./server.go
         working-directory: webserver/
 
+        name: Login to DockerHub
+        uses: docker/login-action@v1 
+        with:
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_PASS }}
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 
@@ -83,10 +91,23 @@ jobs:
         with:
           context: .
           load: true
-          tags: ${{ env.app_name }}/app:latest
+          push: true
+          tags: ${{ env.repo }}/${{ env.app_name }}:latest
 
-      - name: Check docker image
-        run: docker images
+  testImage:
+    name: Test Docker image
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [testSourceCode]
+    strategy:
+      fail-fast: true
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '^1.13.1' # The Go version to download (if necessary) and use.
+
 
       - name: Start docker container
         run: docker run -d -p 80:3000 ${{ env.app_name }}/app:latest

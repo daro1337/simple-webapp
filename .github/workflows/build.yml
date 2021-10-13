@@ -91,7 +91,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ env.repo }}/${{ env.app_name }}:latest
+          tags: ${{ env.app_repo }}/${{ env.app_name }}:latest
 
   testImage:
     name: Test Docker image
@@ -108,7 +108,7 @@ jobs:
           go-version: '^1.13.1' # The Go version to download (if necessary) and use.
 
       - name: Start docker container
-        run: docker run -d -p 80:3000 ${{ env.app_name }}/app:latest
+        run: docker run -d -p 80:3000 ${{ env.app_repo }}/${{ env.app_name }}:latest
 
       - name: Test webapp
         run: curl -s http://localhost

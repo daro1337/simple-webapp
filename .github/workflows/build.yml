@@ -9,11 +9,29 @@ on:
 env:
   app_name: hello
 jobs:
-  build_app:
+  testSourceCode:
     name: Build App
 
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    strategy:
+      fail-fast: true
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '^1.13.1' # The Go version to download (if necessary) and use.
+
+      - name: build webserver
+        run: go vet
+        working-directory: webserver/
+  buildApp:
+    name: Build App
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [testSourceCode]
     strategy:
       fail-fast: true
     steps:
@@ -36,10 +54,11 @@ jobs:
       - name: Test webapp
         run: curl -s http://localhost
 
-  build-image:
+  buildImage:
     name: Build Docker image
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    needs: [testSourceCode]
     strategy:
       fail-fast: true
     steps:

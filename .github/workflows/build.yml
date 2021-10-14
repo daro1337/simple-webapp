@@ -9,9 +9,10 @@ on:
 env:
   app_repo: daro113377
   app_name: hello-go
+
 jobs:
   testSourceCode:
-    name: Test Source Code
+    name: Test Source Code ${{ matrix.go-version }}
 
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -22,7 +23,7 @@ jobs:
 
       - uses: actions/setup-go@v2
         with:
-          go-version: '^1.13.1' # The Go version to download (if necessary) and use.
+          go-version: ${{ matrix.go-version }}
       - name: go mod init
         run: go mod init vet
         working-directory: webserver/
@@ -32,7 +33,7 @@ jobs:
         working-directory: webserver/
 
   buildApp:
-    name: Build App
+    name: Build App @go v${{ matrix.go-version }}
 
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -44,7 +45,7 @@ jobs:
 
       - uses: actions/setup-go@v2
         with:
-          go-version: '^1.13.1' # The Go version to download (if necessary) and use.
+          go-version: ${{ matrix.go-version }}
 
       - name: build webserver
         run: GOOS=linux GOARCH=386 go build ./server.go
@@ -60,18 +61,20 @@ jobs:
         run: curl -s http://localhost
 
   buildImage:
-    name: Build Docker image
+    name: Build Docker image @go v${{ matrix.go-version }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: [testSourceCode]
     strategy:
+      matrix:
+        go-version: [ '1.14', '1.13' ]
       fail-fast: true
     steps:
       - uses: actions/checkout@v2
 
       - uses: actions/setup-go@v2
         with:
-          go-version: '^1.13.1' # The Go version to download (if necessary) and use.
+          go-version: ${{ matrix.go-version }}
 
       - name: build webserver
         run: GOOS=linux GOARCH=386 go build ./server.go
@@ -91,7 +94,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ env.app_repo }}/${{ env.app_name }}:latest
+          tags: ${{ env.app_repo }}/${{ env.app_name }}:latest-${{ matrix.go-version }}
 
   testImage:
     name: Test Docker image
@@ -99,16 +102,18 @@ jobs:
     timeout-minutes: 10
     needs: [buildImage]
     strategy:
+      matrix:
+        go-version: [ '1.14', '1.13' ]
       fail-fast: true
     steps:
       - uses: actions/checkout@v2
 
       - uses: actions/setup-go@v2
         with:
-          go-version: '^1.13.1' # The Go version to download (if necessary) and use.
+          go-version: ${{ matrix.go-version }}
 
       - name: Start docker container
-        run: docker run -d -p 80:3000 ${{ env.app_repo }}/${{ env.app_name }}:latest
+        run: docker run -d -p 80:3000 ${{ env.app_repo }}/${{ env.app_name }}:latest-${{ matrix.go-version }}
 
       - name: Test webapp
         run: curl -s http://localhost
